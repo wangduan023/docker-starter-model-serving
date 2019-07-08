@@ -19,8 +19,12 @@ To check the images type, docker images
 
 docker run  -p 5000:5000 <image-name-you-want-to-run>, e.g. e76782de76a6
   
+Go to localhost:5000 to check the application.
+
 to shutdown
 
 find the instance by writing docker ps
 
 docker stop <instance-name>, e.g., 
+  
+
