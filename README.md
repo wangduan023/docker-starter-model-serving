@@ -13,7 +13,7 @@ Open Command Prompt.
 
 Navigate to the directory as above, Dockerfile should be visible.
 
-docker build C:\docker-starter
+docker build C:\docker-starter . # remember the dot, this gives the option that the command should find the Dockerfile in current dir.
 
 To check the images type, docker images
 
