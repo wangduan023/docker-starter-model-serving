@@ -104,6 +104,6 @@ async def analyze(request):
 #启动程序
 if __name__ == '__main__':
     if len(sys.argv)>2:
-        export_file_url = sys.argv[1]
+        export_file_url = sys.argv[2]
     if 'serve' in sys.argv:
         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
