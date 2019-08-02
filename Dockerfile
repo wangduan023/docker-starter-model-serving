@@ -6,8 +6,8 @@ ENV HTTP_URL="http://www.github.com"
 
 COPY requirements.txt .
 
-RUN pip install --upgrade -r requirements.txt
-
+RUN pip install -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com -r requirements.txt
+#RUN pip install --upgrade -r requirements.txt
 COPY app app/
 
 RUN python app/server.py
