@@ -1,7 +1,6 @@
-FROM python:3.7-slim-stretch
+FROM paddlepaddle/paddle:1.5.1
 
-RUN apt-get update && apt-get install -y git python3-dev gcc \
-    && rm -rf /var/lib/apt/lists/*
+LABEL maintainer "345keji <wangduan023@gmail.com>"
 
 COPY requirements.txt .
 
