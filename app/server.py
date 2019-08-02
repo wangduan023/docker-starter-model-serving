@@ -15,7 +15,7 @@ from paddle.fluid.core import AnalysisConfig
 from paddle.fluid.core import create_paddle_predictor
 
 #下载更新模型
-export_file_url = 'https://drive.google.com/uc?export=download&id=1Wa-DPSL_EuRdaY9CLcdo1qXO0xrbTII9'
+export_file_url = 'https://www.345keji.com'
 export_file_name = 'fit_a_line'
 
 classes = ['beach', 'denseresidential', 'golfcourse']
@@ -78,7 +78,7 @@ loop.close()
 #加载首页
 @app.route('/')
 async def homepage(request):
-    return HTMLResponse('欢迎使用')
+    return HTMLResponse('欢迎使用'+export_file_url)
 
 #模型的更新
 @app.route('/update', methods=['POST','GET'])
@@ -103,5 +103,7 @@ async def analyze(request):
 
 #启动程序
 if __name__ == '__main__':
+    if len(sys.argv)>2:
+        export_file_url = sys.argv[1]
     if 'serve' in sys.argv:
         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
