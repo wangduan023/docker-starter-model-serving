@@ -1,4 +1,4 @@
-FROM paddlepaddle/paddle:1.5.1
+FROM 3.7.4-buster
 
 LABEL maintainer "345keji <wangduan023@gmail.com>"
 
