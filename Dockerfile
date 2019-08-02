@@ -2,6 +2,8 @@ FROM python:3.7.4-buster
 
 LABEL maintainer "345keji <wangduan023@gmail.com>"
 
+ENV HTTP_URL="http://www.github.com"
+
 COPY requirements.txt .
 
 RUN pip install --upgrade -r requirements.txt
@@ -12,4 +14,4 @@ RUN python app/server.py
 
 EXPOSE 5000
 
-CMD ["python", "app/server.py", "serve"]
+CMD ["python", "app/server.py", "serve", $HTTP_URL]
