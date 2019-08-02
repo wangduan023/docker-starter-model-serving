@@ -19,7 +19,6 @@ export_file_url = 'https://drive.google.com/uc?export=download&id=1Wa-DPSL_EuRda
 export_file_name = 'fit_a_line'
 
 classes = ['beach', 'denseresidential', 'golfcourse']
-# path = Path(__file__).parent
 path = 'app/models/fit_a_line'
 
 app = Starlette()
@@ -38,8 +37,6 @@ async def download_file(url, dest):
 
 #构建预测infer
 def load_learner(model_dir,export_file_name):
-
-    print("load_learner==>",model_dir,export_file_name)
 
     config = AnalysisConfig('app/models/fit_a_line')
     #不启动cpu
@@ -81,12 +78,11 @@ loop.close()
 #加载首页
 @app.route('/')
 async def homepage(request):
-    html_file = path / 'view' / 'index.html'
-    return HTMLResponse(html_file.open().read())
+    return HTMLResponse('欢迎使用')
 
 #模型的更新
 @app.route('/update', methods=['POST','GET'])
-async def analyze(request):
+async def update(request):
     #下载更新模型
     learn = setup_learner()
     return JSONResponse({'result': str('更新完毕')})
@@ -105,7 +101,7 @@ async def analyze(request):
     return JSONResponse({'result': str(output_data)})
 
 
-
+#启动程序
 if __name__ == '__main__':
     if 'serve' in sys.argv:
         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
