@@ -8,9 +8,16 @@ from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
+#paddle
+from paddle.fluid.core import PaddleBuf
+from paddle.fluid.core import PaddleDType
+from paddle.fluid.core import PaddleTensor
+from paddle.fluid.core import AnalysisConfig
+from paddle.fluid.core import create_paddle_predictor
 
+#下载更新模型
 export_file_url = 'https://drive.google.com/uc?export=download&id=1Wa-DPSL_EuRdaY9CLcdo1qXO0xrbTII9'
-export_file_name = 'model_ucmerced_landuse.pkl'
+export_file_name = 'fit_a_line'
 
 classes = ['beach', 'denseresidential', 'golfcourse']
 path = Path(__file__).parent
@@ -21,6 +28,7 @@ app.mount('/static', StaticFiles(directory='app/static'))
 
 
 async def download_file(url, dest):
+    print("download_file",url,dest)
     if dest.exists(): return
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -28,9 +36,31 @@ async def download_file(url, dest):
             with open(dest, 'wb') as f:
                 f.write(data)
 
+#构建预测infer
+def load_learner(model_dir,export_file_name):
+
+    print("load_learner==>",model_dir,export_file_name)
+
+    config = AnalysisConfig('app/models/fit_a_line')
+    #不启动cpu
+    config.disable_gpu()
+    #创建预测
+    return create_paddle_predictor(config)
+
+#创建预测参数
+def fake_input(batch_size):
+    image = PaddleTensor()
+    image.name = "x"
+    image.shape = [batch_size, 13]
+    image.dtype = PaddleDType.FLOAT32
+    image.data = PaddleBuf(
+        [ 0.42616305, -0.11363637,  0.25525004, -0.06916996,  0.28457806, -0.14440207,
+        0.17327599, -0.19893268,  0.62828666,  0.49191383,  0.18558154, -0.06862179,
+        0.40637243])
+    return [image]
 
 async def setup_learner():
-    await download_file(export_file_url, path / export_file_name)
+    # await download_file(export_file_url, path / export_file_name)
     try:
         learn = load_learner(path, export_file_name)
         return learn
@@ -48,20 +78,32 @@ tasks = [asyncio.ensure_future(setup_learner())]
 learn = loop.run_until_complete(asyncio.gather(*tasks))[0]
 loop.close()
 
-
+#加载首页
 @app.route('/')
 async def homepage(request):
     html_file = path / 'view' / 'index.html'
     return HTMLResponse(html_file.open().read())
 
-
-@app.route('/analyze', methods=['POST'])
+#模型的更新
+@app.route('/update', methods=['POST','GET'])
 async def analyze(request):
-    img_data = await request.form()
-    img_bytes = await (img_data['file'].read())
-    img = open_image(BytesIO(img_bytes))
-    prediction = learn.predict(img)[0]
-    return JSONResponse({'result': str(prediction)})
+    #下载更新模型
+    learn = setup_learner()
+    return JSONResponse({'result': str('更新完毕')})
+
+#模型分析预测
+@app.route('/analyze', methods=['POST','GET'])
+async def analyze(request):
+    # img_data = await request.form()
+    # img_bytes = await (img_data['file'].read())
+    # img = open_image(BytesIO(img_bytes))
+    # prediction = learn.predict(img)[0]
+    inputs = fake_input(5)
+    outputs = learn.run(inputs)
+    output = outputs[0]
+    output_data = output.data.float_data()
+    return JSONResponse({'result': str(output_data)})
+
 
 
 if __name__ == '__main__':
