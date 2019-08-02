@@ -14,4 +14,4 @@ RUN python app/server.py
 
 EXPOSE 5000
 
-CMD ["python", "app/server.py", "serve","${HTTP_URL}"]
+CMD ["sh", "-c","python app/server.py serve ${HTTP_URL}"]
