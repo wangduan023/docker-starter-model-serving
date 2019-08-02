@@ -1,8 +1,7 @@
+import sys
 import aiohttp
 import asyncio
 import uvicorn
-from fastai import *
-from fastai.vision import *
 from io import BytesIO
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
@@ -20,7 +19,8 @@ export_file_url = 'https://drive.google.com/uc?export=download&id=1Wa-DPSL_EuRda
 export_file_name = 'fit_a_line'
 
 classes = ['beach', 'denseresidential', 'golfcourse']
-path = Path(__file__).parent
+# path = Path(__file__).parent
+path = 'app/models/fit_a_line'
 
 app = Starlette()
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Requested-With', 'Content-Type'])
