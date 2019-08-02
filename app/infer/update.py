@@ -17,6 +17,9 @@ class Update(object):
     def get_net_url(self):
         return self.update_net_url
 
+    def set_update_net_url(self,update_net_url):
+        self.update_net_url = update_net_url
+        
     def set_model_base_path(self,model_base_path):
         self.model_base_path = model_base_path  
 
