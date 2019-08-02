@@ -1,4 +1,5 @@
 import sys
+import os.path
 import aiohttp
 import asyncio
 import uvicorn
@@ -8,66 +9,33 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 #paddle
-from paddle.fluid.core import PaddleBuf
-from paddle.fluid.core import PaddleDType
-from paddle.fluid.core import PaddleTensor
-from paddle.fluid.core import AnalysisConfig
-from paddle.fluid.core import create_paddle_predictor
+from infer.infer import Infer
+from infer.update  import Update
 
-#下载更新模型
-export_file_url = 'https://www.345keji.com'
-export_file_name = 'fit_a_line'
-
-classes = ['beach', 'denseresidential', 'golfcourse']
-path = 'app/models/fit_a_line'
+#是否采用网络更新
+is_update = False;
+#模型的基础路径
+model_base_path = 'app/models/'
+#这个名字可以从网络取出名字
+model_name = 'fit_a_line'
 
 app = Starlette()
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Requested-With', 'Content-Type'])
 app.mount('/static', StaticFiles(directory='app/static'))
 
-
-async def download_file(url, dest):
-    print("download_file",url,dest)
-    if dest.exists(): return
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            data = await response.read()
-            with open(dest, 'wb') as f:
-                f.write(data)
-
+_infer =  Infer()
+_update = Update()
 #构建预测infer
-def load_learner(model_dir,export_file_name):
-
-    config = AnalysisConfig('app/models/fit_a_line')
-    #不启动cpu
-    config.disable_gpu()
-    #创建预测
-    return create_paddle_predictor(config)
-
-#创建预测参数
-def fake_input(batch_size):
-    image = PaddleTensor()
-    image.name = "x"
-    image.shape = [batch_size, 13]
-    image.dtype = PaddleDType.FLOAT32
-    image.data = PaddleBuf(
-        [ 0.42616305, -0.11363637,  0.25525004, -0.06916996,  0.28457806, -0.14440207,
-        0.17327599, -0.19893268,  0.62828666,  0.49191383,  0.18558154, -0.06862179,
-        0.40637243])
-    return [image]
 
 async def setup_learner():
-    # await download_file(export_file_url, path / export_file_name)
+    # 如果可以更新模型都需要从网络加载 网络加载模型
+    if is_update:
+        await _update.download_file()
     try:
-        learn = load_learner(path, export_file_name)
+        learn = _infer.load_model(_update.get_model_name())
         return learn
     except RuntimeError as e:
-        if len(e.args) > 0 and 'CPU-only machine' in e.args[0]:
-            print(e)
-            message = "\n\nThis model was trained with an old version of fastai and will not work in a CPU environment.\n\nPlease update the fastai library in your training environment and export your model again.\n\nSee instructions for 'Returning to work' at https://course.fast.ai."
-            raise RuntimeError(message)
-        else:
-            raise
+        raise e
 
 
 loop = asyncio.get_event_loop()
@@ -78,7 +46,7 @@ loop.close()
 #加载首页
 @app.route('/')
 async def homepage(request):
-    return HTMLResponse('欢迎使用'+export_file_url)
+    return HTMLResponse('欢迎使用'+ _update.get_net_url())
 
 #模型的更新
 @app.route('/update', methods=['POST','GET'])
@@ -94,8 +62,7 @@ async def analyze(request):
     # img_bytes = await (img_data['file'].read())
     # img = open_image(BytesIO(img_bytes))
     # prediction = learn.predict(img)[0]
-    inputs = fake_input(5)
-    outputs = learn.run(inputs)
+    outputs = _infer.run(_infer.fake_input(5))
     output = outputs[0]
     output_data = output.data.float_data()
     return JSONResponse({'result': str(output_data)})
@@ -103,7 +70,12 @@ async def analyze(request):
 
 #启动程序
 if __name__ == '__main__':
-    if len(sys.argv)>2:
-        export_file_url = sys.argv[2]
+    if len(sys.argv)>3:
+        update_net_url = sys.argv[2]
+        is_update = sys.argv[3]=="1"
+        _update.set_update_net_url(update_net_url)
+        _update.set_model_base_path(model_base_path)
+        _update.set_model_default_name(model_name)
+
     if 'serve' in sys.argv:
         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
