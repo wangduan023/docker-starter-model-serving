@@ -3,6 +3,8 @@ from paddle.fluid.core import PaddleDType
 from paddle.fluid.core import PaddleTensor
 from paddle.fluid.core import AnalysisConfig
 from paddle.fluid.core import create_paddle_predictor
+from infer.parms import ParmsItem
+
 
 class Infer(object):
     def __init__(self, *args, **kwargs):
@@ -29,14 +31,6 @@ class Infer(object):
         else:
             return 'model init'
 
-    #预测参数 可以由子类重新
-    def fake_input(self,batch_size):
-        image = PaddleTensor()
-        image.name = "x"
-        image.shape = [batch_size, 13]
-        image.dtype = PaddleDType.FLOAT32
-        image.data = PaddleBuf(
-            [ 0.42616305, -0.11363637,  0.25525004, -0.06916996,  0.28457806, -0.14440207,
-            0.17327599, -0.19893268,  0.62828666,  0.49191383,  0.18558154, -0.06862179,
-            0.40637243])
-        return [image]
+    #预测参数 可以由子类重写
+    def fake_input(self,batch_size,parms):
+        return list(map(lambda item: item.copyToTensor(batch_size),parms))
